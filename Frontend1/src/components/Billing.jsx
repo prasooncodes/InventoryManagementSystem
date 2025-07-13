@@ -1,149 +1,184 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 export default function Billing() {
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
+  const [amountReceived, setAmountReceived] = useState(0);
   const [customerName, setCustomerName] = useState('');
   const [paymentMode, setPaymentMode] = useState('Cash');
   const [message, setMessage] = useState('');
-  const navigate = useNavigate();
 
   useEffect(() => {
-    fetch('http://localhost:3001/products')
-      .then(res => res.json())
-      .then(setProducts)
-      .catch(console.error);
+    fetchProducts();
   }, []);
 
+  const fetchProducts = async () => {
+    const res = await fetch('http://localhost:3001/products');
+    const data = await res.json();
+    if (res.status === 201) setProducts(data);
+  };
+
   const addToCart = (product) => {
-    const existing = cart.find(item => item._id === product._id);
-    if (existing) return;
-
-    setCart([...cart, { ...product, quantity: 1, price: product.ProductPrice }]);
+    const exists = cart.find(item => item._id === product._id);
+    if (exists) {
+      setCart(cart.map(item => item._id === product._id ? { ...item, quantity: item.quantity + 1 } : item));
+    } else {
+      setCart([...cart, { ...product, quantity: 1 }]);
+    }
   };
 
-  const updateCart = (index, field, value) => {
-    const newCart = [...cart];
-    newCart[index][field] = value;
-    setCart(newCart);
+  const updateQty = (id, qty) => {
+    setCart(cart.map(item => item._id === id ? { ...item, quantity: qty } : item));
   };
 
-  const removeFromCart = (index) => {
-    const newCart = [...cart];
-    newCart.splice(index, 1);
-    setCart(newCart);
+  const removeFromCart = (id) => {
+    setCart(cart.filter(item => item._id !== id));
   };
 
-  const total = cart.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+  const finalizeOrder = async () => {
+    if (!cart.length || !amountReceived || !customerName) {
+      setMessage('❌ Please fill all fields and add items to cart.');
+      return;
+    }
 
-  const handleSubmit = async () => {
-  const payload = {
-    customerName,
-    paymentMode,
-    totalAmount: total,
-    items: cart.map(item => ({
-      productId: item._id,
-      name: item.ProductName,
-      price: item.price,
-      quantity: item.quantity
-    }))
-  };
+    const total = cart.reduce((sum, item) => sum + item.quantity * item.ProductPrice, 0);
+    if (amountReceived < total) {
+      setMessage('❌ Amount received is less than total.');
+      return;
+    }
 
-  try {
     const res = await fetch('http://localhost:3001/createbill', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        items: cart.map(item => ({
+          productId: item._id,
+          name: item.ProductName,
+          price: item.ProductPrice,
+          quantity: item.quantity
+        })),
+        totalAmount: total,
+        customerName,
+        paymentMode
+      })
     });
 
     if (res.status === 201) {
-      setMessage('✅ Bill generated successfully.');
-      navigate('/invoice', {
-        state: {
-          customerName,
-          paymentMode,
-          items: cart,
-          total,
-          date: new Date()
-        }
-      });
       setCart([]);
       setCustomerName('');
-      setPaymentMode('Cash');
+      setAmountReceived(0);
+      setMessage('✅ Bill created successfully.');
     } else {
-      const data = await res.json();
-      setMessage(`❌ ${data}`);
+      setMessage('❌ Error creating bill.');
     }
-  } catch (err) {
-    console.error(err);
-    setMessage('❌ Billing failed.');
-  }
-};
+  };
 
+  const total = cart.reduce((sum, item) => sum + item.quantity * item.ProductPrice, 0);
 
   return (
-    <div className="container p-5">
-      <h2>🧾 Billing Module</h2>
-      {message && <div className="alert alert-info">{message}</div>}
+    <div className="max-w-7xl mx-auto px-4 py-10">
+      <h1 className="text-3xl font-bold text-blue-800 mb-6">🧾 Billing</h1>
 
-      <div className="row">
-        <div className="col-md-5">
-          <h4>📦 Products</h4>
-          <ul className="list-group">
-            {products.map(p => (
-              <li key={p._id} className="list-group-item d-flex justify-content-between align-items-center">
-                {p.ProductName} (Stock: {p.ProductQuantity})
-                <button className="btn btn-sm btn-primary" onClick={() => addToCart(p)}>Add</button>
-              </li>
+      {message && (
+        <div className="mb-4 p-4 rounded bg-blue-100 text-blue-700 border border-blue-300">
+          {message}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Products List */}
+        <div className="md:col-span-2">
+          <h2 className="text-xl font-semibold mb-4">🛒 Add Products</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {products.map(product => (
+              <div
+                key={product._id}
+                className="border border-gray-200 p-4 rounded-md shadow hover:shadow-md transition"
+              >
+                <h3 className="text-lg font-semibold text-gray-800">{product.ProductName}</h3>
+                <p className="text-gray-600">₹{product.ProductPrice}</p>
+                <button
+                  className="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                  onClick={() => addToCart(product)}
+                >
+                  Add to Cart
+                </button>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
 
-        <div className="col-md-7">
-          <h4>🛒 Cart</h4>
+        {/* Cart */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">🧺 Cart</h2>
           {cart.length === 0 ? (
-            <p>No items added yet.</p>
+            <p className="text-gray-500">No items in cart.</p>
           ) : (
-            <table className="table">
-              <thead>
-                <tr><th>Product</th><th>Qty</th><th>Price</th><th>Total</th><th></th></tr>
-              </thead>
-              <tbody>
-                {cart.map((item, index) => (
-                  <tr key={item._id}>
-                    <td>{item.ProductName}</td>
-                    <td><input type="number" min={1} value={item.quantity} onChange={(e) => updateCart(index, 'quantity', parseInt(e.target.value))} /></td>
-                    <td><input type="number" step="0.01" value={item.price} onChange={(e) => updateCart(index, 'price', parseFloat(e.target.value))} /></td>
-                    <td>₹{(item.quantity * item.price).toFixed(2)}</td>
-                    <td><button onClick={() => removeFromCart(index)} className="btn btn-sm btn-danger">Remove</button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="space-y-4">
+              {cart.map(item => (
+                <div
+                  key={item._id}
+                  className="border p-4 rounded-md bg-white shadow-sm"
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="font-semibold">{item.ProductName}</h3>
+                      <p className="text-sm text-gray-600">₹{item.ProductPrice} × {item.quantity}</p>
+                    </div>
+                    <button
+                      onClick={() => removeFromCart(item._id)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <i className="fas fa-trash"></i>
+                    </button>
+                  </div>
+                  <input
+                    type="number"
+                    min={1}
+                    value={item.quantity}
+                    onChange={(e) => updateQty(item._id, parseInt(e.target.value))}
+                    className="mt-2 w-full border px-3 py-1 rounded"
+                  />
+                </div>
+              ))}
+
+              <div className="border-t pt-4 mt-4">
+                <p className="text-right text-lg font-semibold text-green-700">
+                  Total: ₹{total.toFixed(2)}
+                </p>
+              </div>
+
+              <input
+                type="text"
+                placeholder="Customer Name"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className="w-full border px-3 py-2 rounded mt-4"
+              />
+              <select
+                value={paymentMode}
+                onChange={(e) => setPaymentMode(e.target.value)}
+                className="w-full border px-3 py-2 rounded"
+              >
+                <option>Cash</option>
+                <option>UPI</option>
+                <option>Card</option>
+              </select>
+              <input
+                type="number"
+                placeholder="Amount Received"
+                value={amountReceived}
+                onChange={(e) => setAmountReceived(parseFloat(e.target.value))}
+                className="w-full border px-3 py-2 rounded"
+              />
+              <button
+                onClick={finalizeOrder}
+                className="bg-green-600 hover:bg-green-700 text-white w-full py-2 rounded text-lg font-medium mt-2"
+              >
+                Finalize Order
+              </button>
+            </div>
           )}
-
-          <h5>Total: ₹{total.toFixed(2)}</h5>
-
-          <div className="mt-3">
-            <input
-              type="text"
-              className="form-control mb-2"
-              placeholder="Customer Name (optional)"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-            />
-
-            <select className="form-select mb-3" value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)}>
-              <option value="Cash">Cash</option>
-              <option value="Card">Card</option>
-              <option value="UPI">UPI</option>
-            </select>
-
-            <button className="btn btn-success" onClick={handleSubmit}>
-              Finalize Bill & Save
-            </button>
-          </div>
         </div>
       </div>
     </div>

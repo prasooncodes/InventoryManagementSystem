@@ -36,7 +36,6 @@ export default function Products() {
   const getProducts = async () => {
     setLoading(true);
     setMessage('');
-
     try {
       const res = await fetch('http://localhost:3001/products');
       const data = await res.json();
@@ -48,10 +47,9 @@ export default function Products() {
 
         if (expired.length > 0 && showExpiryModal) {
           setExpiredProducts(expired);
-          return; // ⛔ don't set productData yet, wait for modal confirmation
+          return;
         }
 
-        // delete expired immediately if no modal shown
         for (const p of expired) {
           await fetch(`http://localhost:3001/deleteproduct/${p._id}`, {
             method: 'DELETE',
@@ -109,10 +107,6 @@ export default function Products() {
     .filter(p => {
       if (filter === 'near') return isNearExpiry(p.ExpiryDate);
       return true;
-    })
-    .sort((a, b) => {
-      if (!a.ExpiryDate || !b.ExpiryDate) return 0;
-      return new Date(a.ExpiryDate) - new Date(b.ExpiryDate);
     });
 
   const nearCount = productData.filter(p => isNearExpiry(p.ExpiryDate)).length;
@@ -124,22 +118,25 @@ export default function Products() {
   }, 0);
 
   return (
-    <div className="container-fluid p-5">
-      <h1>Products Inventory</h1>
+    <div className="max-w-7xl mx-auto px-4 py-10">
+      <h1 className="text-3xl font-bold text-blue-800 mb-6">📦 Product Inventory</h1>
 
       {searchKeyword && (
-        <p className="text-muted">
-          Searching: <strong>{searchKeyword}</strong>
+        <p className="text-gray-600 mb-4">
+          Searching: <span className="font-semibold">{searchKeyword}</span>
         </p>
       )}
 
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <NavLink to="/insertproduct" className="btn btn-primary fs-5">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+        <NavLink
+          to="/insertproduct"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md text-lg font-medium shadow"
+        >
           + Add New Product
         </NavLink>
 
         <select
-          className="form-select w-auto"
+          className="border rounded-md px-4 py-2 text-gray-700"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         >
@@ -149,107 +146,94 @@ export default function Products() {
       </div>
 
       {message && (
-        <div className="alert alert-info col-lg-6" role="alert">
+        <div className="bg-blue-100 border border-blue-300 text-blue-700 px-4 py-2 rounded mb-4 max-w-xl">
           {message}
         </div>
       )}
+
       {nearCount > 0 && (
-        <div className="alert alert-warning col-lg-8">
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-2 rounded mb-4 max-w-xl">
           ⚠ {nearCount} product{nearCount > 1 ? 's are' : ' is'} near expiry (within 30 days)!
         </div>
       )}
 
-      {/* Expiry Modal */}
       {showExpiryModal && expiredProducts.length > 0 && (
-        <div className="modal fade show d-block" tabIndex="-1" role="dialog">
-          <div className="modal-dialog modal-dialog-centered" role="document">
-            <div className="modal-content">
-              <div className="modal-header bg-danger text-white">
-                <h5 className="modal-title">Expired Products Found</h5>
-              </div>
-              <div className="modal-body">
-                <p>{expiredProducts.length} product(s) are expired. Do you want to delete them now?</p>
-              </div>
-              <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={cancelDeleteExpired}>
-                  No
-                </button>
-                <button className="btn btn-danger" onClick={confirmDeleteExpired}>
-                  Yes, Delete
-                </button>
-              </div>
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+          <div className="bg-white rounded-md shadow-md w-full max-w-md p-6">
+            <h3 className="text-lg font-semibold text-red-600 mb-4">⚠ Expired Products Found</h3>
+            <p className="text-gray-700 mb-6">
+              {expiredProducts.length} product(s) are expired. Do you want to delete them now?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded"
+                onClick={cancelDeleteExpired}
+              >
+                No
+              </button>
+              <button
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+                onClick={confirmDeleteExpired}
+              >
+                Yes, Delete
+              </button>
             </div>
           </div>
         </div>
       )}
 
       {loading ? (
-        <div className="mt-4 fs-4">Loading products...</div>
+        <div className="text-lg text-gray-600 mt-6">Loading products...</div>
       ) : (
-        <div className="table-responsive mt-3">
-          <table className="table table-striped table-hover fs-5">
-            <thead className="table-dark">
-              <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Price</th>
-                <th>Barcode</th>
-                <th>Qty</th>
-                <th>Expiry</th>
-                <th>Update</th>
-                <th>Delete</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredProducts.length > 0 ? (
-                filteredProducts.map((p, i) => (
-                  <tr
-                    key={p._id}
-                    className={isNearExpiry(p.ExpiryDate) ? 'table-warning' : ''}
-                  >
-                    <td>{i + 1}</td>
-                    <td>{p.ProductName}</td>
-                    <td>₹{parseFloat(p.ProductPrice).toFixed(2)}</td>
-                    <td>{p.ProductBarcode}</td>
-                    <td>{p.ProductQuantity}</td>
-                    <td>{p.ExpiryDate ? p.ExpiryDate.slice(0, 10) : '-'}</td>
-                    <td>
-                      <NavLink
-                        to={`/updateproduct/${p._id}`}
-                        className="btn btn-sm btn-warning"
-                      >
-                        <i className="fa-solid fa-pen-to-square"></i>
-                      </NavLink>
-                    </td>
-                    <td>
-                      <button
-                        className="btn btn-sm btn-danger"
-                        onClick={() => deleteProduct(p._id)}
-                      >
-                        <i className="fa-solid fa-trash"></i>
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="8" className="text-center text-muted">
-                    No products to display.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6">
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((p, i) => (
+                <div
+                  key={p._id}
+                  className="relative bg-white rounded-lg shadow hover:shadow-md p-4 border border-gray-200 transition-transform hover:-translate-y-1"
+                >
+                  {isNearExpiry(p.ExpiryDate) && (
+                    <span className="absolute top-2 right-2 bg-yellow-400 text-black text-xs px-2 py-1 rounded-full font-medium">
+                      ⏳ Near Expiry
+                    </span>
+                  )}
+                  <div className="text-5xl text-blue-500 mb-3 text-center">📦</div>
+                  <h2 className="text-lg font-semibold text-gray-800 text-center">{p.ProductName}</h2>
 
-          <div className="card mt-4 col-lg-4 ms-auto">
-            <div className="card-body text-end">
-              <h5 className="card-title">📦 Total Inventory Value</h5>
-              <p className="card-text fs-4 fw-bold text-success">
-                ₹{totalValue.toFixed(2)}
-              </p>
-            </div>
+                  <div className="mt-3 space-y-1 text-sm text-gray-700">
+                    <p><strong>Price:</strong> ₹{parseFloat(p.ProductPrice).toFixed(2)}</p>
+                    <p><strong>Barcode:</strong> {p.ProductBarcode}</p>
+                    <p><strong>Qty:</strong> {p.ProductQuantity}</p>
+                    <p><strong>Expiry:</strong> {p.ExpiryDate ? p.ExpiryDate.slice(0, 10) : '-'}</p>
+                  </div>
+
+                  <div className="flex justify-between items-center mt-4">
+                    <NavLink
+                      to={`/updateproduct/${p._id}`}
+                      className="text-yellow-600 hover:text-yellow-800 text-sm font-semibold"
+                    >
+                      <i className="fas fa-edit mr-1"></i> Edit
+                    </NavLink>
+                    <button
+                      onClick={() => deleteProduct(p._id)}
+                      className="text-red-600 hover:text-red-800 text-sm font-semibold"
+                    >
+                      <i className="fas fa-trash mr-1"></i> Delete
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500">No products available.</p>
+            )}
           </div>
-        </div>
+
+          <div className="mt-10 bg-green-50 border border-green-300 rounded-md p-4 text-right max-w-sm ml-auto">
+            <h5 className="text-lg font-semibold mb-1">💰 Total Inventory Value</h5>
+            <p className="text-2xl font-bold text-green-700">₹{totalValue.toFixed(2)}</p>
+          </div>
+        </>
       )}
     </div>
   );

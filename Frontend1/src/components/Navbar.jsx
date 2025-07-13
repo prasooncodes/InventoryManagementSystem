@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 
 export default function Navbar({ title = 'Inventory System' }) {
   const [search, setSearch] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
@@ -13,94 +14,96 @@ export default function Navbar({ title = 'Inventory System' }) {
     }
   };
 
+  const navLinks = [
+    { to: '/', label: 'Home' },
+    { to: '/products', label: 'Products' },
+    { to: '/returns', label: 'Returns' },
+    { to: '/billing', label: 'Billing' },
+    { to: '/about', label: 'About' },
+  ];
+
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-danger">
-      <div className="container-fluid">
-        <NavLink className="navbar-brand fs-3" to="/">
+    <header className="bg-gradient-to-r from-blue-800 to-blue-600 text-white shadow-md sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center py-3">
+        {/* Logo / Title */}
+        <NavLink to="/" className="text-2xl font-bold tracking-tight">
           {title}
         </NavLink>
 
+        {/* Hamburger toggle */}
         <button
-          className="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-          aria-controls="navbarNav"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
+          className="lg:hidden text-white focus:outline-none"
+          onClick={() => setMenuOpen(!menuOpen)}
         >
-          <span className="navbar-toggler-icon"></span>
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            {menuOpen ? (
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            ) : (
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            )}
+          </svg>
         </button>
 
-        <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-            <li className="nav-item">
-              <NavLink
-                to="/"
-                className={({ isActive }) =>
-                  `nav-link fs-5 text-white ${isActive ? 'fw-bold active' : ''}`
-                }
-              >
-                Home
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink
-                to="/products"
-                className={({ isActive }) =>
-                  `nav-link fs-5 text-white ${isActive ? 'fw-bold active' : ''}`
-                }
-              >
-                Products
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink
-                to="/returns"
-                className={({ isActive }) =>
-                  `nav-link fs-5 text-white ${isActive ? 'fw-bold active' : ''}`
-                }
-              >
-                Returns
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink
-                to="/billing"
-                className={({ isActive }) =>
-                  `nav-link fs-5 text-white ${isActive ? 'fw-bold active' : ''}`
-                }
-              >
-                Billing
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink
-                to="/about"
-                className={({ isActive }) =>
-                  `nav-link fs-5 text-white ${isActive ? 'fw-bold active' : ''}`
-                }
-              >
-                About
-              </NavLink>
-            </li>
+        {/* Links */}
+        <nav
+          className={`${
+            menuOpen ? 'block' : 'hidden'
+          } absolute top-16 left-0 w-full bg-blue-700 lg:bg-transparent lg:static lg:flex lg:items-center gap-6 transition-all duration-300`}
+        >
+          <ul className="lg:flex lg:space-x-6 px-6 lg:px-0 py-3 lg:py-0">
+            {navLinks.map((link) => (
+              <li key={link.to}>
+                <NavLink
+                  to={link.to}
+                  className={({ isActive }) =>
+                    `block px-2 py-1 rounded transition hover:bg-white/10 ${
+                      isActive ? 'font-semibold underline underline-offset-4' : ''
+                    }`
+                  }
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {link.label}
+                </NavLink>
+              </li>
+            ))}
           </ul>
+        </nav>
 
-          <form className="d-flex" onSubmit={handleSubmit}>
-            <input
-              className="form-control me-2"
-              type="search"
-              placeholder="Search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              aria-label="Search"
-            />
-            <button className="btn btn-light fs-5" type="submit">
-              Search
-            </button>
-          </form>
-        </div>
+        {/* Search */}
+        <form
+          onSubmit={handleSubmit}
+          className="hidden lg:flex items-center space-x-2"
+        >
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search products..."
+            className="rounded-md px-3 py-1 text-black focus:outline-none focus:ring-2 focus:ring-blue-300"
+          />
+          <button
+            type="submit"
+            className="bg-white text-blue-700 px-3 py-1 rounded hover:bg-gray-100 font-semibold"
+          >
+            Search
+          </button>
+        </form>
       </div>
-    </nav>
+    </header>
   );
 }

@@ -2,25 +2,31 @@ import React from 'react';
 
 export default function About() {
   return (
-    <div className="container-fluid p-5">
-      <h1 className="mb-4">Inventory Management System (IMS)</h1>
-      <p className="fs-5">
-        This <strong>MERN</strong> CRUD application allows shopkeepers to manage their product inventory efficiently.
-        It includes functionality for:
+    <div className="max-w-5xl mx-auto px-6 py-12">
+      <h1 className="text-4xl font-bold text-blue-800 mb-6">
+        Inventory Management System (IMS)
+      </h1>
+
+      <p className="text-lg text-gray-700 mb-4">
+        This <span className="font-semibold">MERN</span> CRUD application empowers shopkeepers to manage their product inventory efficiently.
+        Key features include:
       </p>
-      <ul className="fs-5">
-        <li>Adding new products with name, price, and barcode</li>
-        <li>Viewing product inventory</li>
-        <li>Updating existing products</li>
-        <li>Deleting products</li>
+
+      <ul className="list-disc list-inside text-gray-800 text-base space-y-2 mb-6">
+        <li>📦 Adding new products with name, price, and barcode</li>
+        <li>📋 Viewing current product inventory</li>
+        <li>✏️ Updating existing product details</li>
+        <li>🗑️ Deleting products from the inventory</li>
       </ul>
-      <p className="fs-5">
-        Built with <strong>MongoDB</strong>, <strong>Express.js</strong>, <strong>React</strong>, and <strong>Node.js</strong>,
-        the system supports both cloud-connected and offline-first workflows.
+
+      <p className="text-lg text-gray-700 mb-4">
+        Built with <span className="font-semibold">MongoDB</span>, <span className="font-semibold">Express.js</span>, <span className="font-semibold">React</span>, and <span className="font-semibold">Node.js</span>,
+        the system supports both cloud-based and offline-first workflows for real-world retail needs.
       </p>
-      <p className="fs-6 text-muted mt-4">
-        Developed by Tanish Jindal · 2025
-      </p>
+
+      <div className="text-sm text-gray-500 mt-8 border-t pt-4">
+        Developed by <span className="font-semibold">Tanish Jindal</span> & <span className="font-semibold">Prasoon Mishra</span> · © 2025
+      </div>
     </div>
   );
 }
