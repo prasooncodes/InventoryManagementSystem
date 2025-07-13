@@ -45,18 +45,7 @@ export default function Products() {
         const expired = data.filter(p => p.ExpiryDate && new Date(p.ExpiryDate) < now);
         const valid = data.filter(p => !p.ExpiryDate || new Date(p.ExpiryDate) >= now);
 
-        if (expired.length > 0 && showExpiryModal) {
-          setExpiredProducts(expired);
-          return;
-        }
-
-        for (const p of expired) {
-          await fetch(`http://localhost:3001/deleteproduct/${p._id}`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-          });
-        }
-
+        setExpiredProducts(expired);
         setProductData(valid);
         if (valid.length === 0) setMessage('All products expired or none available.');
       } else {
@@ -99,7 +88,6 @@ export default function Products() {
 
   const cancelDeleteExpired = () => {
     setShowExpiryModal(false);
-    setProductData(productData.filter(p => !expiredProducts.includes(p)));
   };
 
   const filteredProducts = productData
