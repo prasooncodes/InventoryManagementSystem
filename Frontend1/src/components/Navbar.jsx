@@ -19,7 +19,8 @@ export default function Navbar({ title = 'Inventory System' }) {
     { to: '/products', label: 'Products' },
     { to: '/returns', label: 'Returns' },
     { to: '/billing', label: 'Billing' },
-    { to: '/about', label: 'About' },
+    { to: '/about', label: 'About' }, 
+    { to: '/invoices', label: 'Billing History' }, // ✅ Billing History Link
   ];
 
   return (
@@ -75,7 +76,9 @@ export default function Navbar({ title = 'Inventory System' }) {
                       isActive ? 'font-semibold underline underline-offset-4' : ''
                     }`
                   }
-                  onClick={() => setMenuOpen(false)}
+                  onClick={() => {
+                    if (window.innerWidth < 1024) setMenuOpen(false);
+                  }}
                 >
                   {link.label}
                 </NavLink>

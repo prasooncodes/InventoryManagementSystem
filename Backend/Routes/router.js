@@ -2,8 +2,10 @@ const express = require('express');
 const router = express.Router();
 const products = require('../Models/Products');
 const Returns = require('../Models/Returns');
+const Invoice = require('../Models/Invoice');
+const Bill = require('../Models/Bill');
 
-// ✅ Insert Product
+// Insert Product
 router.post('/insertproduct', async (req, res) => {
   const {
     ProductName,
@@ -47,7 +49,7 @@ router.post('/insertproduct', async (req, res) => {
   }
 });
 
-// ✅ Get All Products
+// Get All Products
 router.get('/products', async (req, res) => {
   try {
     const allProducts = await products.find({});
@@ -58,7 +60,7 @@ router.get('/products', async (req, res) => {
   }
 });
 
-// ✅ Get Single Product
+// Get Single Product
 router.get('/products/:id', async (req, res) => {
   try {
     const product = await products.findById(req.params.id);
@@ -70,7 +72,7 @@ router.get('/products/:id', async (req, res) => {
   }
 });
 
-// ✅ Update Product
+// Update Product
 router.put('/updateproduct/:id', async (req, res) => {
   const {
     ProductName,
@@ -113,7 +115,7 @@ router.put('/updateproduct/:id', async (req, res) => {
   }
 });
 
-// ✅ Delete Product
+// Delete Product
 router.delete('/deleteproduct/:id', async (req, res) => {
   try {
     const deleted = await products.findByIdAndDelete(req.params.id);
@@ -125,7 +127,7 @@ router.delete('/deleteproduct/:id', async (req, res) => {
   }
 });
 
-// ✅ Return Product (Expired/Near-Expiry)
+// Return Product
 router.post('/returnproduct/:id', async (req, res) => {
   const { quantityReturned, actualMoneyReceived, reason = 'expired' } = req.body;
   const productId = req.params.id;
@@ -157,7 +159,6 @@ router.post('/returnproduct/:id', async (req, res) => {
 
     await returnRecord.save();
 
-    // Update or delete product
     product.ProductQuantity -= quantityReturned;
     if (product.ProductQuantity <= 0) {
       await product.deleteOne();
@@ -172,7 +173,7 @@ router.post('/returnproduct/:id', async (req, res) => {
   }
 });
 
-// ✅ Get All Return Logs
+// Get All Return Logs
 router.get('/returns', async (req, res) => {
   try {
     const logs = await Returns.find().sort({ date: -1 });
@@ -183,8 +184,7 @@ router.get('/returns', async (req, res) => {
   }
 });
 
-const Invoice = require('../Models/Invoice');
-
+// Finalize Order (Invoice)
 router.post('/finalizeorder', async (req, res) => {
   const { cart, amountReceived } = req.body;
 
@@ -209,9 +209,10 @@ router.post('/finalizeorder', async (req, res) => {
     res.status(500).json('❌ Server error.');
   }
 });
-const Bill = require('../Models/Bill'); // Create this model
+
+// Create Bill and Save to Both Bill & Invoice Collections
 router.post('/createbill', async (req, res) => {
-  const { items, customerName, paymentMode, totalAmount } = req.body;
+  const { items, customerName, paymentMode, totalAmount, amountReceived } = req.body;
 
   try {
     for (const item of items) {
@@ -230,12 +231,30 @@ router.post('/createbill', async (req, res) => {
       paymentMode,
       totalAmount,
     });
-
     await newBill.save();
+
+    const invoice = new Invoice({
+      cart: items,
+      totalAmount,
+      amountReceived,
+    });
+    await invoice.save();
+
     res.status(201).json(newBill);
   } catch (err) {
     console.error(err);
     res.status(500).json('❌ Error while creating bill');
+  }
+});
+
+// Get all invoices (Billing History)
+router.get('/invoices', async (req, res) => {
+  try {
+    const data = await Invoice.find().sort({ createdAt: -1 });
+    res.status(200).json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json('❌ Failed to fetch invoices');
   }
 });
 

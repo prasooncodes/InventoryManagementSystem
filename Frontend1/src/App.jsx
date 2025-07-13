@@ -11,6 +11,8 @@ import Billing from './components/Billing'; // ✅ Billing Module
 import ScrollToTop from './components/ScrollToTop';
 import ExpiryModal from './components/ExpiryModal'; // ✅ Expiry Alert
 import Invoice from './components/Invoice'; // ✅ NEW
+import BillingHistory from './components/BillingHistory'; // ✅ Billing History Module
+
 
 import {
   BrowserRouter as Router,
@@ -68,6 +70,7 @@ function App() {
           <Route path="/billing" element={<Billing />} /> {/* ✅ Billing Route */}
           <Route path="/invoice" element={<Invoice />} /> {/* ✅ Invoice route */}
           <Route path="/about" element={<About />} />
+          <Route path="/invoices" element={<BillingHistory />} /> {/* ✅ Billing History Route */}
           <Route path="*" element={<h2 className="text-center mt-5">404 - Page Not Found</h2>} />
         </Routes>
       </Router>

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 export default function Billing() {
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
-  const [amountReceived, setAmountReceived] = useState(0);
+  const [amountReceived, setAmountReceived] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [paymentMode, setPaymentMode] = useState('Cash');
   const [message, setMessage] = useState('');
@@ -28,6 +28,7 @@ export default function Billing() {
   };
 
   const updateQty = (id, qty) => {
+    if (qty < 1 || isNaN(qty)) return;
     setCart(cart.map(item => item._id === id ? { ...item, quantity: qty } : item));
   };
 
@@ -36,13 +37,14 @@ export default function Billing() {
   };
 
   const finalizeOrder = async () => {
-    if (!cart.length || !amountReceived || !customerName) {
+    const numericAmount = parseFloat(amountReceived);
+    if (!cart.length || !numericAmount || !customerName.trim()) {
       setMessage('❌ Please fill all fields and add items to cart.');
       return;
     }
 
     const total = cart.reduce((sum, item) => sum + item.quantity * item.ProductPrice, 0);
-    if (amountReceived < total) {
+    if (numericAmount < total) {
       setMessage('❌ Amount received is less than total.');
       return;
     }
@@ -59,21 +61,24 @@ export default function Billing() {
         })),
         totalAmount: total,
         customerName,
-        paymentMode
+        paymentMode,
+        amountReceived: numericAmount
       })
     });
 
     if (res.status === 201) {
       setCart([]);
       setCustomerName('');
-      setAmountReceived(0);
+      setAmountReceived('');
       setMessage('✅ Bill created successfully.');
     } else {
-      setMessage('❌ Error creating bill.');
+      const err = await res.text();
+      setMessage(`❌ Error creating bill: ${err}`);
     }
   };
 
   const total = cart.reduce((sum, item) => sum + item.quantity * item.ProductPrice, 0);
+  const change = amountReceived ? parseFloat(amountReceived) - total : 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
@@ -135,17 +140,22 @@ export default function Billing() {
                   <input
                     type="number"
                     min={1}
-                    value={item.quantity}
+                    value={item.quantity || ''}
                     onChange={(e) => updateQty(item._id, parseInt(e.target.value))}
                     className="mt-2 w-full border px-3 py-1 rounded"
                   />
                 </div>
               ))}
 
-              <div className="border-t pt-4 mt-4">
+              <div className="border-t pt-4 mt-4 space-y-1">
                 <p className="text-right text-lg font-semibold text-green-700">
                   Total: ₹{total.toFixed(2)}
                 </p>
+                {amountReceived && !isNaN(change) && (
+                  <p className="text-right text-sm text-gray-700">
+                    Change to return: ₹{change.toFixed(2)}
+                  </p>
+                )}
               </div>
 
               <input
@@ -168,12 +178,18 @@ export default function Billing() {
                 type="number"
                 placeholder="Amount Received"
                 value={amountReceived}
-                onChange={(e) => setAmountReceived(parseFloat(e.target.value))}
+                onChange={(e) => setAmountReceived(e.target.value)}
                 className="w-full border px-3 py-2 rounded"
               />
               <button
+                onClick={() => setAmountReceived(total.toFixed(2))}
+                className="text-sm text-blue-600 underline mb-2 text-left"
+              >
+                Autofill with Total
+              </button>
+              <button
                 onClick={finalizeOrder}
-                className="bg-green-600 hover:bg-green-700 text-white w-full py-2 rounded text-lg font-medium mt-2"
+                className="bg-green-600 hover:bg-green-700 text-white w-full py-2 rounded text-lg font-medium"
               >
                 Finalize Order
               </button>
