@@ -8,7 +8,7 @@ export default function About() {
         {/* Text Section */}
         <div>
           <h1 className="text-4xl font-bold text-blue-800 mb-4">
-            🛒 Inventory Management System (IMS)
+            🛒 QuickMart
           </h1>
 
           <p className="text-lg text-gray-700 mb-4">

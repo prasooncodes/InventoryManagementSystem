@@ -1,112 +1,92 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 export default function Returns() {
-  const [products, setProducts] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [actualReceived, setActualReceived] = useState('');
-  const [message, setMessage] = useState('');
+  const [returns, setReturns] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('http://localhost:3001/products')
-      .then((res) => res.json())
-      .then((data) => {
-        const now = new Date();
-        const filtered = data.filter((p) => {
-          const exp = new Date(p.ExpiryDate);
-          const daysLeft = (exp - now) / (1000 * 60 * 60 * 24);
-          return daysLeft <= 30;
-        });
-        setProducts(filtered);
-      });
+    fetchReturns();
   }, []);
 
-  const handleReturn = async () => {
-    if (!selected) return;
-
-    const discountedPrice = selected.ProductPrice - (selected.Discount || 0);
-    const returnValue = discountedPrice * selected.ProductQuantity;
-    const actual = parseFloat(actualReceived) || 0;
-    const costImpact = returnValue - actual;
-
+  const fetchReturns = async () => {
     try {
-      const res = await fetch(`http://localhost:3001/returnproduct/${selected._id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          quantityReturned: selected.ProductQuantity,
-          actualMoneyReceived: actual,
-          reason: new Date(selected.ExpiryDate) < new Date() ? 'expired' : 'near-expiry',
-        }),
-      });
-
-      const result = await res.json();
-
-      if (res.status === 201) {
-        setMessage('✅ Return processed and product updated/removed.');
-        setProducts(products.filter(p => p._id !== selected._id));
-        setSelected(null);
-        setActualReceived('');
+      const res = await fetch('http://localhost:3001/returns');
+      const data = await res.json();
+      if (res.status === 200) {
+        setReturns(data);
       } else {
-        setMessage('❌ Failed to process return: ' + result);
+        setError('Failed to fetch return logs.');
       }
     } catch (err) {
       console.error(err);
-      setMessage('❌ Server error while processing return.');
+      setError('Server error while fetching return data.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container p-5">
-      <h2>Returns Module (Expired / Near Expiry)</h2>
+    <div className="bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-4xl font-bold text-blue-800 mb-6 text-center">
+          🔄 Product Returns Log
+        </h1>
 
-      {message && <div className="alert alert-info">{message}</div>}
+        {loading && <p className="text-gray-600">Loading return records...</p>}
+        {error && <p className="text-red-600">{error}</p>}
 
-      <div className="row mt-4">
-        <div className="col-md-6">
-          <h4>Products Near Expiry</h4>
-          <ul className="list-group">
-            {products.map((p) => (
-              <li
-                key={p._id}
-                className={`list-group-item ${selected?._id === p._id ? 'active' : ''}`}
-                onClick={() => setSelected(p)}
-                style={{ cursor: 'pointer' }}
-              >
-                {p.ProductName} - Expiry: {p.ExpiryDate?.slice(0, 10)}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {!loading && returns.length === 0 && (
+          <p className="text-gray-500 text-center">No return records found.</p>
+        )}
 
-        <div className="col-md-6">
-          {selected && (
-            <>
-              <h4>Return Details</h4>
-              <p><strong>Product:</strong> {selected.ProductName}</p>
-              <p><strong>Barcode:</strong> {selected.ProductBarcode}</p>
-              <p><strong>Price:</strong> ₹{selected.ProductPrice}</p>
-              <p><strong>Discount:</strong> ₹{selected.Discount || 0}</p>
-              <p><strong>Quantity:</strong> {selected.ProductQuantity}</p>
-              <p><strong>Return Value:</strong> ₹
-                {((selected.ProductPrice - (selected.Discount || 0)) * selected.ProductQuantity).toFixed(2)}
-              </p>
-
-              <label className="form-label mt-3">Actual Money Received</label>
-              <input
-                type="number"
-                className="form-control"
-                value={actualReceived}
-                onChange={(e) => setActualReceived(e.target.value)}
-                min={0}
-                step="0.01"
-              />
-
-              <button className="btn btn-danger mt-4" onClick={handleReturn}>
-                Process Return & Remove
-              </button>
-            </>
-          )}
-        </div>
+        {!loading && returns.length > 0 && (
+          <div className="overflow-x-auto bg-white shadow-md rounded-lg p-4">
+            <table className="min-w-full border border-gray-200 text-sm">
+              <thead className="bg-blue-100 text-blue-800">
+                <tr>
+                  <th className="px-4 py-3 text-left">#</th>
+                  <th className="px-4 py-3 text-left">Product</th>
+                  <th className="px-4 py-3 text-left">Barcode</th>
+                  <th className="px-4 py-3 text-left">Qty Returned</th>
+                  <th className="px-4 py-3 text-left">Price</th>
+                  <th className="px-4 py-3 text-left">Discount</th>
+                  <th className="px-4 py-3 text-left">Return Value</th>
+                  <th className="px-4 py-3 text-left">Money Received</th>
+                  <th className="px-4 py-3 text-left">Cost Impact</th>
+                  <th className="px-4 py-3 text-left">Reason</th>
+                  <th className="px-4 py-3 text-left">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {returns.map((r, index) => (
+                  <tr
+                    key={r._id}
+                    className="border-t hover:bg-gray-50 transition duration-200"
+                  >
+                    <td className="px-4 py-2">{index + 1}</td>
+                    <td className="px-4 py-2 font-medium text-gray-900">{r.ProductName}</td>
+                    <td className="px-4 py-2 text-gray-600">{r.ProductBarcode}</td>
+                    <td className="px-4 py-2">{r.returnedQuantity}</td>
+                    <td className="px-4 py-2">₹{r.productPrice?.toFixed(2)}</td>
+                    <td className="px-4 py-2">₹{r.discount?.toFixed(2)}</td>
+                    <td className="px-4 py-2 text-green-700 font-semibold">₹{r.returnValue?.toFixed(2)}</td>
+                    <td className="px-4 py-2">₹{r.actualMoneyReceived?.toFixed(2)}</td>
+                    <td
+                      className={`px-4 py-2 font-bold ${r.costImpact < 0 ? 'text-red-600' : 'text-gray-800'}`}
+                    >
+                      ₹{r.costImpact?.toFixed(2)}
+                    </td>
+                    <td className="px-4 py-2 capitalize">{r.reason}</td>
+                    <td className="px-4 py-2 text-gray-500">
+                      {new Date(r.date).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

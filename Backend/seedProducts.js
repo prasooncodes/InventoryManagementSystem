@@ -1,6 +1,4 @@
-// seedProducts.js
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
-
 
 const products = [
   {
@@ -116,6 +114,82 @@ const products = [
     ProductQuantity: 9,
     Discount: 5,
     ExpiryDate: '2025-07-28'
+  },
+
+  // ✅ NEW PRODUCTS ADDED BELOW:
+  {
+    ProductName: 'Apple iPhone Charger (20W)',
+    ProductPrice: 1599,
+    ProductBarcode: '100000000016',
+    ProductQuantity: 14,
+    Discount: 100
+  },
+  {
+    ProductName: 'Maggi 2-Minute Noodles (Pack of 6)',
+    ProductPrice: 78,
+    ProductBarcode: '100000000017',
+    ProductQuantity: 50,
+    Discount: 5,
+    ExpiryDate: '2025-01-01'
+  },
+  {
+    ProductName: 'Leather Wallet (Men)',
+    ProductPrice: 699,
+    ProductBarcode: '100000000018',
+    ProductQuantity: 20,
+    Discount: 50
+  },
+  {
+    ProductName: 'Dettol Liquid Handwash 750ml',
+    ProductPrice: 165,
+    ProductBarcode: '100000000019',
+    ProductQuantity: 30,
+    Discount: 15,
+    ExpiryDate: '2025-10-10'
+  },
+  {
+    ProductName: 'Bluetooth Neckband Headphones',
+    ProductPrice: 999,
+    ProductBarcode: '100000000020',
+    ProductQuantity: 10,
+    Discount: 100
+  },
+  {
+    ProductName: 'A4 Notebook (200 Pages)',
+    ProductPrice: 55,
+    ProductBarcode: '100000000021',
+    ProductQuantity: 75,
+    Discount: 0
+  },
+  {
+    ProductName: 'Peanut Butter (Crunchy) 1kg',
+    ProductPrice: 350,
+    ProductBarcode: '100000000022',
+    ProductQuantity: 18,
+    Discount: 25,
+    ExpiryDate: '2025-11-05'
+  },
+  {
+    ProductName: 'Black Formal Pants (Size 32)',
+    ProductPrice: 899,
+    ProductBarcode: '100000000023',
+    ProductQuantity: 7,
+    Discount: 120
+  },
+  {
+    ProductName: 'LED Desk Lamp',
+    ProductPrice: 499,
+    ProductBarcode: '100000000024',
+    ProductQuantity: 22,
+    Discount: 50
+  },
+  {
+    ProductName: 'Corn Flakes 500g',
+    ProductPrice: 130,
+    ProductBarcode: '100000000025',
+    ProductQuantity: 35,
+    Discount: 10,
+    ExpiryDate: '2025-09-01'
   }
 ];
 

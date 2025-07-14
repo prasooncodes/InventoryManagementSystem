@@ -1,21 +1,27 @@
 import React from "react";
 import { motion } from "framer-motion";
-import homeImage from "../assets/home.jpg"; 
+import { useNavigate } from "react-router-dom";
+import homeImage from "../assets/home.jpg";
 
 const categories = [
-  { name: "Electronics", image: "https://source.unsplash.com/400x300/?electronics" },
-  { name: "Groceries", image: "https://source.unsplash.com/400x300/?grocery" },
-  { name: "Clothing", image: "https://source.unsplash.com/400x300/?clothes" },
-  { name: "Furniture", image: "https://source.unsplash.com/400x300/?furniture" },
+  { name: "Electronics", image: "https://images.unsplash.com/photo-1609081219090-a6d81d3085bf?w=500" },
+  { name: "Groceries", image: "https://images.unsplash.com/photo-1583258292688-d0213dc5a3a8?w=500" },
+  { name: "Clothing", image: "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=500" },
+  { name: "Furniture", image: "https://plus.unsplash.com/premium_photo-1684338795288-097525d127f0?w=500" },
 ];
 
 export default function HomePage() {
+  const navigate = useNavigate();
+
+  const handleGetStarted = () => navigate("/products");
+  const handleLearnMore = () => navigate("/about");
+
   return (
     <div
       className="min-h-screen bg-cover bg-center flex flex-col items-center justify-center text-white"
       style={{ backgroundImage: `url(${homeImage})` }}
     >
-      <div className="backdrop-blur-sm bg-black/40 p-10 rounded-2xl max-w-5xl w-full text-center shadow-2xl">
+      <div className="bg-black/40 p-10 rounded-2xl max-w-5xl w-full text-center shadow-2xl">
         <motion.h1
           className="text-5xl font-bold mb-4"
           initial={{ opacity: 0, y: -50 }}
@@ -39,10 +45,16 @@ export default function HomePage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8, duration: 1 }}
         >
-          <button className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl font-semibold transition duration-300 shadow-lg">
+          <button
+            onClick={handleGetStarted}
+            className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl font-semibold transition duration-300 shadow-lg"
+          >
             Get Started
           </button>
-          <button className="bg-transparent border border-white px-6 py-3 rounded-xl font-semibold hover:bg-white hover:text-black transition duration-300">
+          <button
+            onClick={handleLearnMore}
+            className="bg-transparent border border-white px-6 py-3 rounded-xl font-semibold hover:bg-white hover:text-black transition duration-300"
+          >
             Learn More
           </button>
         </motion.div>

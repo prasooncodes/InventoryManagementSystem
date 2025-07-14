@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable'; // ✅ Correct way to import
 
 export default function Billing() {
   const [products, setProducts] = useState([]);
@@ -67,6 +69,7 @@ export default function Billing() {
     });
 
     if (res.status === 201) {
+      generatePDFInvoice(); // ✅ generate before clearing cart
       setCart([]);
       setCustomerName('');
       setAmountReceived('');
@@ -75,6 +78,39 @@ export default function Billing() {
       const err = await res.text();
       setMessage(`❌ Error creating bill: ${err}`);
     }
+  };
+
+  const generatePDFInvoice = () => {
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text('QuickMart - Invoice #001', 14, 20);
+
+
+    doc.setFontSize(12);
+    doc.text(`Customer: ${customerName}`, 14, 30);
+    doc.text(`Payment Mode: ${paymentMode}`, 14, 36);
+    doc.text(`Date: ${new Date().toLocaleString()}`, 14, 42);
+
+    const tableColumn = ['Product', 'Price', 'Qty', 'Total'];
+    const tableRows = cart.map(item => [
+      item.ProductName,
+      `₹${item.ProductPrice.toFixed(2)}`,
+      item.quantity,
+      `₹${(item.ProductPrice * item.quantity).toFixed(2)}`
+    ]);
+
+    autoTable(doc, {
+      startY: 50,
+      head: [tableColumn],
+      body: tableRows
+    });
+
+    const total = cart.reduce((sum, item) => sum + item.ProductPrice * item.quantity, 0);
+    doc.text(`Total: ₹${total.toFixed(2)}`, 14, doc.lastAutoTable.finalY + 10);
+    doc.text(`Amount Received: ₹${amountReceived}`, 14, doc.lastAutoTable.finalY + 16);
+
+    doc.save(`Invoice_${customerName}_${Date.now()}.pdf`);
   };
 
   const total = cart.reduce((sum, item) => sum + item.quantity * item.ProductPrice, 0);
@@ -91,20 +127,17 @@ export default function Billing() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Products List */}
+        {/* Product List */}
         <div className="md:col-span-2">
           <h2 className="text-xl font-semibold mb-4">🛒 Add Products</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {products.map(product => (
-              <div
-                key={product._id}
-                className="border border-gray-200 p-4 rounded-md shadow hover:shadow-md transition"
-              >
-                <h3 className="text-lg font-semibold text-gray-800">{product.ProductName}</h3>
-                <p className="text-gray-600">₹{product.ProductPrice}</p>
+              <div key={product._id} className="border p-4 rounded shadow">
+                <h3 className="text-lg font-semibold">{product.ProductName}</h3>
+                <p className="text-gray-700">₹{product.ProductPrice}</p>
                 <button
-                  className="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
                   onClick={() => addToCart(product)}
+                  className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white py-1 rounded"
                 >
                   Add to Cart
                 </button>
@@ -117,43 +150,40 @@ export default function Billing() {
         <div>
           <h2 className="text-xl font-semibold mb-4">🧺 Cart</h2>
           {cart.length === 0 ? (
-            <p className="text-gray-500">No items in cart.</p>
+            <p className="text-gray-600">No items in cart.</p>
           ) : (
             <div className="space-y-4">
               {cart.map(item => (
-                <div
-                  key={item._id}
-                  className="border p-4 rounded-md bg-white shadow-sm"
-                >
+                <div key={item._id} className="border p-3 rounded bg-white shadow-sm">
                   <div className="flex justify-between items-center">
                     <div>
                       <h3 className="font-semibold">{item.ProductName}</h3>
-                      <p className="text-sm text-gray-600">₹{item.ProductPrice} × {item.quantity}</p>
+                      <p className="text-sm text-gray-600">
+                        ₹{item.ProductPrice} × {item.quantity}
+                      </p>
                     </div>
                     <button
                       onClick={() => removeFromCart(item._id)}
-                      className="text-red-600 hover:text-red-800"
+                      className="text-red-500 hover:text-red-700"
                     >
-                      <i className="fas fa-trash"></i>
+                      🗑
                     </button>
                   </div>
                   <input
                     type="number"
-                    min={1}
-                    value={item.quantity || ''}
+                    min="1"
+                    value={item.quantity}
                     onChange={(e) => updateQty(item._id, parseInt(e.target.value))}
-                    className="mt-2 w-full border px-3 py-1 rounded"
+                    className="mt-2 w-full border px-2 py-1 rounded"
                   />
                 </div>
               ))}
 
-              <div className="border-t pt-4 mt-4 space-y-1">
-                <p className="text-right text-lg font-semibold text-green-700">
-                  Total: ₹{total.toFixed(2)}
-                </p>
+              <div className="pt-4 border-t">
+                <p className="text-right font-semibold text-green-700">Total: ₹{total.toFixed(2)}</p>
                 {amountReceived && !isNaN(change) && (
-                  <p className="text-right text-sm text-gray-700">
-                    Change to return: ₹{change.toFixed(2)}
+                  <p className="text-right text-sm text-gray-600">
+                    Change: ₹{change.toFixed(2)}
                   </p>
                 )}
               </div>
@@ -163,7 +193,7 @@ export default function Billing() {
                 placeholder="Customer Name"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full border px-3 py-2 rounded mt-4"
+                className="w-full border px-3 py-2 rounded"
               />
               <select
                 value={paymentMode}
@@ -183,16 +213,24 @@ export default function Billing() {
               />
               <button
                 onClick={() => setAmountReceived(total.toFixed(2))}
-                className="text-sm text-blue-600 underline mb-2 text-left"
+                className="text-sm text-blue-600 underline text-left"
               >
                 Autofill with Total
               </button>
               <button
                 onClick={finalizeOrder}
-                className="bg-green-600 hover:bg-green-700 text-white w-full py-2 rounded text-lg font-medium"
+                className="bg-green-600 hover:bg-green-700 text-white w-full py-2 rounded mt-2"
               >
                 Finalize Order
               </button>
+              {cart.length > 0 && (
+                <button
+                  onClick={generatePDFInvoice}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white w-full py-2 mt-2 rounded"
+                >
+                  Download Invoice (PDF)
+                </button>
+              )}
             </div>
           )}
         </div>
