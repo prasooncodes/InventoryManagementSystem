@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable'; // ✅ Correct way to import
+import autoTable from 'jspdf-autotable'; 
+import API from '../api';
 
 export default function Billing() {
   const [products, setProducts] = useState([]);
