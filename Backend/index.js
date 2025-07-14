@@ -11,8 +11,6 @@ const app = express();
 connectToMongo();
 
 // 🔧 Middleware
-const cors = require("cors");
-
 app.use(cors({
   origin: "https://inventorymanagementsystem1-fiu3.onrender.com/",
   credentials: true
