@@ -12,7 +12,7 @@ connectToMongo();
 
 // 🔧 Middleware
 app.use(cors({
-  origin: "https://inventorymanagementsystem1-fiu3.onrender.com/",
+  origin: "https://quickmart-frontend-s35m.onrender.com/",
   credentials: true
 }));
 
