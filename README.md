@@ -3,7 +3,7 @@
 **QuickMart** is a modern full-stack Inventory Management System built using the **MERN stack** (MongoDB, Express, React, Node.js). It helps shopkeepers and small businesses efficiently manage their stock, billing, returns, and daily sales. The system supports **offline-first usage** and includes a **cloud sync** feature to keep data safe.
 
 ### 🔗 Live Demo:
-🌐 [View on Render](https://quickmart-inventory-system.onrender.com)
+🌐 [View on Render](https://quickmart-frontend-s35m.onrender.com)
 
 ---
 
