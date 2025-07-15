@@ -128,50 +128,58 @@ router.delete('/deleteproduct/:id', async (req, res) => {
 });
 
 // Return Product
-router.post('/returnproduct/:id', async (req, res) => {
-  const { quantityReturned, actualMoneyReceived, reason = 'expired' } = req.body;
-  const productId = req.params.id;
+// Return product using barcode
+router.post('/returnproduct', async (req, res) => {
+  const { barcode, returnQty, reason } = req.body;
+
+  if (!barcode || !returnQty || !reason) {
+    return res.status(400).json('❌ Missing required fields');
+  }
 
   try {
-    const product = await products.findById(productId);
-    if (!product) return res.status(404).json('❌ Product not found.');
+    const product = await products.findOne({ ProductBarcode: barcode });
 
-    if (quantityReturned > product.ProductQuantity) {
-      return res.status(400).json('❌ Returned quantity exceeds current stock.');
+    if (!product) return res.status(404).json('❌ Product not found by barcode.');
+
+    if (returnQty > product.ProductQuantity) {
+      return res.status(400).json('❌ Return quantity exceeds current stock.');
     }
 
     const discountedPrice = product.ProductPrice - (product.Discount || 0);
-    const returnValue = quantityReturned * discountedPrice;
-    const costImpact = returnValue - actualMoneyReceived;
+    const returnValue = returnQty * discountedPrice;
+    const actualReceived = returnValue; // you can adjust logic if needed
+    const costImpact = returnValue - actualReceived;
 
     const returnRecord = new Returns({
-      productId,
+      productId: product._id,
       ProductName: product.ProductName,
       ProductBarcode: product.ProductBarcode,
-      returnedQuantity: quantityReturned,
+      returnedQuantity: returnQty,
       productPrice: product.ProductPrice,
       discount: product.Discount || 0,
       returnValue,
-      actualMoneyReceived,
+      actualMoneyReceived: actualReceived,
       costImpact,
       reason,
+      date: new Date()
     });
 
     await returnRecord.save();
 
-    product.ProductQuantity -= quantityReturned;
+    product.ProductQuantity -= returnQty;
     if (product.ProductQuantity <= 0) {
       await product.deleteOne();
     } else {
       await product.save();
     }
 
-    res.status(201).json({ message: '✅ Product returned and logged.', returnRecord });
+    res.status(200).json({ message: '✅ Product returned successfully', returnRecord });
   } catch (err) {
     console.error(err);
-    res.status(500).json('❌ Server error during return.');
+    res.status(500).json('❌ Server error during return');
   }
 });
+
 
 // Get All Return Logs
 router.get('/returns', async (req, res) => {
