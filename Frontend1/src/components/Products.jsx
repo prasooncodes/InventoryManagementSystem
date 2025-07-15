@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import API from '../api';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -37,20 +38,16 @@ export default function Products() {
     setLoading(true);
     setMessage('');
     try {
-      const res = await fetch('http://localhost:3001/products');
-      const data = await res.json();
+      const res = await API.get('/api/products');
+      const data = res.data;
 
-      if (res.status === 201) {
-        const now = new Date();
-        const expired = data.filter(p => p.ExpiryDate && new Date(p.ExpiryDate) < now);
-        const valid = data.filter(p => !p.ExpiryDate || new Date(p.ExpiryDate) >= now);
+      const now = new Date();
+      const expired = data.filter(p => p.ExpiryDate && new Date(p.ExpiryDate) < now);
+      const valid = data.filter(p => !p.ExpiryDate || new Date(p.ExpiryDate) >= now);
 
-        setExpiredProducts(expired);
-        setProductData(valid);
-        if (valid.length === 0) setMessage('All products expired or none available.');
-      } else {
-        setMessage('❌ Failed to fetch products. Please try again.');
-      }
+      setExpiredProducts(expired);
+      setProductData(valid);
+      if (valid.length === 0) setMessage('All products expired or none available.');
     } catch (err) {
       console.error(err);
       setMessage('❌ Server error. Please try again later.');
@@ -62,10 +59,7 @@ export default function Products() {
   const deleteProduct = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
     try {
-      await fetch(`http://localhost:3001/deleteproduct/${id}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-      });
+      await API.delete(`/api/deleteproduct/${id}`);
       getProducts();
       setMessage('✅ Product deleted.');
     } catch (err) {
@@ -76,10 +70,7 @@ export default function Products() {
 
   const confirmDeleteExpired = async () => {
     for (const p of expiredProducts) {
-      await fetch(`http://localhost:3001/deleteproduct/${p._id}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-      });
+      await API.delete(`/api/deleteproduct/${p._id}`);
     }
     setExpiredProducts([]);
     setShowExpiryModal(false);
@@ -176,7 +167,7 @@ export default function Products() {
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6">
             {filteredProducts.length > 0 ? (
-              filteredProducts.map((p, i) => (
+              filteredProducts.map((p) => (
                 <div
                   key={p._id}
                   className="relative bg-white rounded-lg shadow hover:shadow-md p-4 border border-gray-200 transition-transform hover:-translate-y-1"
