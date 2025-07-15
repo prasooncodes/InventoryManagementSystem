@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import API from '../api'; // ✅ Axios instance with VITE_API_BASE
 
 export default function Returns() {
   const [returns, setReturns] = useState([]);
@@ -11,13 +12,8 @@ export default function Returns() {
 
   const fetchReturns = async () => {
     try {
-      const res = await fetch('http://localhost:3001/returns');
-      const data = await res.json();
-      if (res.status === 200) {
-        setReturns(data);
-      } else {
-        setError('Failed to fetch return logs.');
-      }
+      const res = await API.get('/api/returns');
+      setReturns(res.data);
     } catch (err) {
       console.error(err);
       setError('Server error while fetching return data.');
@@ -73,7 +69,9 @@ export default function Returns() {
                     <td className="px-4 py-2 text-green-700 font-semibold">₹{r.returnValue?.toFixed(2)}</td>
                     <td className="px-4 py-2">₹{r.actualMoneyReceived?.toFixed(2)}</td>
                     <td
-                      className={`px-4 py-2 font-bold ${r.costImpact < 0 ? 'text-red-600' : 'text-gray-800'}`}
+                      className={`px-4 py-2 font-bold ${
+                        r.costImpact < 0 ? 'text-red-600' : 'text-gray-800'
+                      }`}
                     >
                       ₹{r.costImpact?.toFixed(2)}
                     </td>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import API from '../api'; // ✅ Axios instance using VITE_API_BASE
 
 export default function InsertProduct() {
   const [productName, setProductName] = useState('');
@@ -31,23 +32,17 @@ export default function InsertProduct() {
     setSuccess('');
 
     try {
-      const res = await fetch('http://localhost:3001/insertproduct', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ProductName: productName,
-          ProductPrice: productPrice,
-          ProductBarcode: productBarcode,
-          ProductQuantity: productQuantity,
-          ProductDetails: productDetails,
-          Discount: discount,
-          MRP: mrp,
-          PurchaseDate: purchaseDate,
-          ExpiryDate: expiryDate,
-        }),
+      const res = await API.post('/api/insertproduct', {
+        ProductName: productName,
+        ProductPrice: productPrice,
+        ProductBarcode: productBarcode,
+        ProductQuantity: productQuantity,
+        ProductDetails: productDetails,
+        Discount: discount,
+        MRP: mrp,
+        PurchaseDate: purchaseDate,
+        ExpiryDate: expiryDate,
       });
-
-      await res.json();
 
       if (res.status === 201) {
         setSuccess('✅ Product inserted successfully!');
@@ -61,14 +56,14 @@ export default function InsertProduct() {
         setPurchaseDate('');
         setExpiryDate('');
         setTimeout(() => navigate('/products'), 1500);
-      } else if (res.status === 422) {
-        setError('⚠ Product already exists with that barcode.');
-      } else {
-        setError('Something went wrong. Please try again.');
       }
     } catch (err) {
+      if (err.response?.status === 422) {
+        setError('⚠ Product already exists with that barcode.');
+      } else {
+        setError('❌ Something went wrong. Please try again.');
+      }
       console.error(err);
-      setError('An error occurred. Please try again later.');
     } finally {
       setLoading(false);
     }

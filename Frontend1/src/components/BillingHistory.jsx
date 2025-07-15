@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import API from '../api'; // ✅ Use your centralized axios instance
 
 export default function BillingHistory() {
   const [bills, setBills] = useState([]);
@@ -11,16 +12,11 @@ export default function BillingHistory() {
 
   const fetchBills = async () => {
     try {
-      const res = await fetch('http://localhost:3001/invoices');
-      const data = await res.json();
-      if (res.status === 200) {
-        setBills(data);
-      } else {
-        setError('Failed to load billing history.');
-      }
+      const res = await API.get('/api/invoices'); // ✅ Updated path and method
+      setBills(res.data);
     } catch (err) {
       console.error(err);
-      setError('Server error occurred.');
+      setError('❌ Failed to load billing history.');
     } finally {
       setLoading(false);
     }

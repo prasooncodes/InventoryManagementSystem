@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable'; 
+import autoTable from 'jspdf-autotable';
 import API from '../api';
 
 export default function Billing() {
@@ -16,9 +16,13 @@ export default function Billing() {
   }, []);
 
   const fetchProducts = async () => {
-    const res = await fetch('http://localhost:3001/products');
-    const data = await res.json();
-    if (res.status === 201) setProducts(data);
+    try {
+      const res = await API.get('/api/products');
+      setProducts(res.data);
+    } catch (err) {
+      console.error(err);
+      setMessage('❌ Failed to fetch products.');
+    }
   };
 
   const addToCart = (product) => {
@@ -52,10 +56,8 @@ export default function Billing() {
       return;
     }
 
-    const res = await fetch('http://localhost:3001/createbill', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    try {
+      const res = await API.post('/api/createbill', {
         items: cart.map(item => ({
           productId: item._id,
           name: item.ProductName,
@@ -66,18 +68,18 @@ export default function Billing() {
         customerName,
         paymentMode,
         amountReceived: numericAmount
-      })
-    });
+      });
 
-    if (res.status === 201) {
-      generatePDFInvoice(); // ✅ generate before clearing cart
-      setCart([]);
-      setCustomerName('');
-      setAmountReceived('');
-      setMessage('✅ Bill created successfully.');
-    } else {
-      const err = await res.text();
-      setMessage(`❌ Error creating bill: ${err}`);
+      if (res.status === 201) {
+        generatePDFInvoice();
+        setCart([]);
+        setCustomerName('');
+        setAmountReceived('');
+        setMessage('✅ Bill created successfully.');
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage(`❌ Error creating bill: ${err.response?.data || err.message}`);
     }
   };
 
@@ -86,7 +88,6 @@ export default function Billing() {
 
     doc.setFontSize(18);
     doc.text('QuickMart - Invoice #001', 14, 20);
-
 
     doc.setFontSize(12);
     doc.text(`Customer: ${customerName}`, 14, 30);
