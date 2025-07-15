@@ -12,14 +12,14 @@ connectToMongo();
 
 // 🔧 Middleware
 app.use(cors({
-  origin: "https://quickmart-frontend-s35m.onrender.com",
+  origin: "https://quickmart-frontend-s35m.onrender.com", // ✅ no trailing slash
   credentials: true
 }));
 
 app.use(express.json());
 
 // 📦 API Routes
-app.use(router);
+app.use('/api', router); // ✅ prefix all routes with /api
 
 // 🚀 Server Listen
 const PORT = process.env.PORT || 3001;
