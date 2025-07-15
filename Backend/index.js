@@ -10,9 +10,7 @@ const app = express();
 // 🔌 Connect to MongoDB
 connectToMongo();
 
-// 🔧 Middleware
-const cors = require('cors');
-
+// 🔧 Middleware 
 app.use(cors({
   origin: ['https://quickmart-frontend-s35m.onrender.com'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
