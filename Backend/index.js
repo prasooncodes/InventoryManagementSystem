@@ -11,10 +11,14 @@ const app = express();
 connectToMongo();
 
 // 🔧 Middleware
+const cors = require('cors');
+
 app.use(cors({
-  origin: "https://quickmart-frontend-s35m.onrender.com", // ✅ no trailing slash
+  origin: ['https://quickmart-frontend-s35m.onrender.com'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
+
 
 app.use(express.json());
 
