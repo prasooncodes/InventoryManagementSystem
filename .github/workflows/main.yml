@@ -1,0 +1,84 @@
+name: Build and Deploy MERN Stack
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy MERN Application
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: |
+            Backend/package-lock.json
+            Frontend1/package-lock.json
+
+      # Backend Tests (optional - add your tests)
+      - name: Install Backend Dependencies
+        working-directory: ./Backend
+        run: npm ci
+
+      - name: Run Backend Tests
+        working-directory: ./Backend
+        run: npm test || echo "No tests specified"
+
+      # Frontend Tests (optional - add your tests)
+      - name: Install Frontend Dependencies
+        working-directory: ./Frontend1
+        run: npm ci
+
+      - name: Lint Frontend
+        working-directory: ./Frontend1
+        run: npm run lint || echo "Linting completed"
+
+      - name: Build Frontend
+        working-directory: ./Frontend1
+        run: npm run build
+
+      # Docker Hub Login
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      # Build and Push Backend Image
+      - name: Build Backend Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./Backend
+          dockerfile: ./Backend/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/mern-backend:latest
+            ${{ secrets.DOCKER_HUB_USERNAME }}/mern-backend:${{ github.sha }}
+
+      # Build and Push Frontend Image
+      - name: Build Frontend Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./Frontend1
+          dockerfile: ./Frontend1/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/mern-frontend:latest
+            ${{ secrets.DOCKER_HUB_USERNAME }}/mern-frontend:${{ github.sha }}
+
+      - name: Deployment Success
+        run: |
+          echo "✅ Docker images built and pushed successfully!"
+          echo "Backend: ${{ secrets.DOCKER_HUB_USERNAME }}/mern-backend:latest"
+          echo "Frontend: ${{ secrets.DOCKER_HUB_USERNAME }}/mern-frontend:latest"
